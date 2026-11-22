@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Мой калькулятор — 10 класс</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:#F2F3F5;color:#2B2D33}
+header{position:sticky;top:0;background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 16px;display:flex;gap:12px;align-items:center;z-index:10}
+.menu-btn{font-size:22px;cursor:pointer;background:#EEF1F4;border:0;border-radius:10px;padding:6px 12px}
+h1{font-size:20px;margin:0} .sub{font-size:13px;color:#6b7280}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05)}
+label{font-size:13px;color:#6b7280;display:block;margin-top:14px} input,select{width:100%;padding:12px;border:1px solid #d9dee3;border-radius:10px;font-size:18px;margin-top:6px}
+.result{margin-top:14px;background:#F7F8FA;border-radius:12px;padding:14px;font-size:19px}
+.small{font-size:14px;color:#555;margin-top:6px} .btns{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.btn{padding:10px 16px;border:1px solid #d9dee3;background:#EEF1F4;border-radius:999px;cursor:pointer;font-size:16px}
+.btn.active{background:#5A7A9A;color:#fff;border-color:#5A7A9A}
+.menu{position:fixed;inset:0;background:rgba(0,0,0,.3);display:none} .menu.open{display:block}
+.menu-box{background:#fff;width:300px;max-width:85%;height:100%;padding:18px} .menu-item{padding:14px 10px;border-bottom:1px solid #eee;cursor:pointer;font-size:17px}
+.formula{border:1px solid #e5e7eb;border-radius:12px;padding:12px;margin-bottom:10px;cursor:pointer}
+.formula b{font-size:17px} .formula p{margin:6px 0 0;color:#666;font-size:14px}
+.group{margin:22px 0 8px;font-size:18px;font-weight:700}
+.hidden{display:none}
+</style></head>
+<body>
+<header><button class="menu-btn" onclick="document.getElementById('m').classList.add('open')">☰</button><div><h1>Мой калькулятор</h1><div class="sub">10 класс • корни • тригонометрия • степени</div></div></header>
+<div class="menu" id="m" onclick="this.classList.remove('open')"><div class="menu-box" onclick="event.stopPropagation()">
+<h3>Каталог</h3>
+<div class="menu-item" onclick="show('roots')">√ Калькулятор корней</div>
+<div class="menu-item" onclick="show('trig')">sin / cos / tg / ctg</div>
+<div class="menu-item" onclick="show('formulas')">Формулы тригонометрии — 28</div>
+<div class="menu-item" onclick="show('powers')">Степени и минусы</div>
+<div class="menu-item" onclick="show('common')">Обычный калькулятор</div>
+</div></div>
+<div class="wrap">
+
+<!-- ROOTS -->
+<div id="sec-roots" class="card"><h2>√ Калькулятор корней</h2>
+<label>Просто напиши число</label><input id="rootNum" type="number" value="144" oninput="calcRoot()">
+<label>Степень корня</label><select id="rootDeg" onchange="calcRoot()"><option value="2">2 — квадратный √</option><option value="3">3 — кубический ∛</option><option value="4">4 — ∜</option></select>
+<div class="btns"><button class="btn active" id="bSimple" onclick="setRootMode('simple')">Простой корень</button><button class="btn" id="bSimplify" onclick="setRootMode('simplify')">Упростить корень</button></div>
+<div class="result" id="rootOut"></div><div class="small" id="rootExp"></div>
+</div>
+
+<!-- TRIG -->
+<div id="sec-trig" class="card hidden"><h2>sin / cos / tg / ctg</h2>
+<label>Просто напиши угол в градусах</label><input id="ang" type="number" value="30" oninput="calcTrig()">
+<div class="btns">
+<button class="btn active" data-trig="sin" onclick="setTrig('sin')">sin</button>
+<button class="btn" data-trig="cos" onclick="setTrig('cos')">cos</button>
+<button class="btn" data-trig="tg" onclick="setTrig('tg')">tg</button>
+<button class="btn" data-trig="ctg" onclick="setTrig('ctg')">ctg</button>
+</div>
+<div class="result" id="trigOut"></div><div class="small" id="trigExp"></div>
+<div class="small"><b>Таблица:</b> sin 0=0, 30=0.5, 45=0.707, 60=0.866, 90=1<br>cos 0=1, 30=0.866, 45=0.707, 60=0.5, 90=0<br>tg 0=0, 30=0.577, 45=1, 60=1.732<br>ctg 30=1.732, 45=1, 60=0.577</div>
+</div>
+
+<!-- FORMULAS -->
+<div id="sec-formulas" class="card hidden"><h2>Формулы тригонометрии</h2><p>Всего: 28 формул. Нажми на формулу — она скопируется.</p><div id="formList"></div></div>
+
+<!-- POWERS -->
+<div id="sec-powers" class="card hidden"><h2>Степени и минусы</h2>
+<label>Число</label><input id="pBase" type="number" value="2" oninput="calcPow()">
+<label>Степень</label><input id="pExp" type="number" value="5" oninput="calcPow()">
+<div class="result" id="powOut"></div>
+<h3 style="margin-top:20px">Минусы</h3>
+<label>Напиши как в чате: -5 + 10</label><input id="minusIn" value="-5 + 10" oninput="calcMinus()">
+<div class="result" id="minusOut"></div><div class="small">Примеры: -5 * -5 = 25, потому что минус на минус = плюс. -5 - (-3) = -2</div>
+</div>
+
+<!-- COMMON -->
+<div id="sec-common" class="card hidden"><h2>Обычный калькулятор</h2>
+<label>Напиши как в чате: 15% от 200, или -5 + 10</label><input id="commonIn" value="15% от 200" oninput="calcCommon()">
+<div class="result" id="commonOut"></div>
+<div class="small">Понимает: + - * / %, "процентов от", "корень из 144", "sin 30"</div>
+</div>
+
+<p style="text-align:center;color:#888;font-size:13px"></p>
+</div>
+<script>
+let trig='sin', rootMode='simple';
+const formulas=[
+["Базовые","sin²x + cos²x = 1","Знаешь sin — найдёшь cos: cos = √(1 - sin²)"],
+["Базовые","tg x = sin x / cos x","Тангенс — синус делить на косинус"],
+["Базовые","ctg x = cos x / sin x","Котангенс — наоборот"],
+["Базовые","tg x * ctg x = 1","Тангенс и котангенс обратные"],
+["Базовые","1 + tg²x = 1 / cos²x","Знаешь tg — найдёшь cos"],
+["Базовые","1 + ctg²x = 1 / sin²x","Знаешь ctg — найдёшь sin"],
+["Двойной угол","sin 2x = 2 sin x cos x","Двойка ВНУТРИ — сначала угол ×2"],
+["Двойной угол","cos 2x = cos²x - sin²x","Косинус двойного угла"],
+["Двойной угол","cos 2x = 2cos²x - 1","Не путай с 2cos x! Тут cos В КВАДРАТЕ!"],
+["Двойной угол","cos 2x = 1 - 2sin²x","Ещё один вид той же формулы"],
+["Двойной угол","tg 2x = 2 tg x / (1 - tg²x)","Тангенс двойного угла"],
+["Сумма и разность","sin(x+y) = sin x cos y + cos x sin y",""],
+["Сумма и разность","sin(x-y) = sin x cos y - cos x sin y",""],
+["Сумма и разность","cos(x+y) = cos x cos y - sin x sin y",""],
+["Сумма и разность","cos(x-y) = cos x cos y + sin x sin y",""],
+["Сумма и разность","tg(x+y) = (tg x + tg y) / (1 - tg x tg y)",""],
+["Сумма и разность","tg(x-y) = (tg x - tg y) / (1 + tg x tg y)",""],
+["Половинный угол","sin²(x/2) = (1 - cos x) / 2",""],
+["Половинный угол","cos²(x/2) = (1 + cos x) / 2",""],
+["Половинный угол","tg(x/2) = sin x / (1 + cos x)",""],
+["Сумма в произведение","sin x + sin y = 2 sin((x+y)/2) cos((x-y)/2)",""],
+["Сумма в произведение","sin x - sin y = 2 cos((x+y)/2) sin((x-y)/2)",""],
+["Сумма в произведение","cos x + cos y = 2 cos((x+y)/2) cos((x-y)/2)",""],
+["Сумма в произведение","cos x - cos y = -2 sin((x+y)/2) sin((x-y)/2)",""],
+["Произведение в сумму","sin x sin y = (cos(x-y) - cos(x+y)) / 2",""],
+["Произведение в сумму","cos x cos y = (cos(x-y) + cos(x+y)) / 2",""],
+["Произведение в сумму","sin x cos y = (sin(x+y) + sin(x-y)) / 2",""],
+["Произведение в сумму","cos x sin y = (sin(x+y) - sin(x-y)) / 2",""],
+];
+function renderFormulas(){
+ let html='', last='';
+ formulas.forEach(f=>{
+   if(f[0]!==last){html+=`<div class="group">${f[0]}</div>`; last=f[0];}
+   html+=`<div class="formula" onclick="navigator.clipboard.writeText('${f[1]}');this.style.background='#EEF6EE'"><b>${f[1]}</b><p>${f[2]||'Нажми, чтобы скопировать'}</p></div>`;
+ });
+ document.getElementById('formList').innerHTML=html;
+}
+function show(id){['roots','trig','formulas','powers','common'].forEach(s=>document.getElementById('sec-'+s).classList.add('hidden')); document.getElementById('sec-'+id).classList.remove('hidden'); document.getElementById('m').classList.remove('open'); window.scrollTo(0,0);}
+function setRootMode(m){rootMode=m; document.getElementById('bSimple').classList.toggle('active',m==='simple'); document.getElementById('bSimplify').classList.toggle('active',m==='simplify'); calcRoot();}
+function calcRoot(){
+ let n=parseFloat(document.getElementById('rootNum').value); let d=parseInt(document.getElementById('rootDeg').value);
+ if(isNaN(n)){document.getElementById('rootOut').textContent='Введи число';return;}
+ let sym=d==2?'√':d==3?'∛':'∜';
+ let v=Math.pow(Math.abs(n),1/d); if(n<0&&d==2){document.getElementById('rootOut').textContent='√ из отрицательного не бывает в школе';document.getElementById('rootExp').textContent='';return;}
+ if(rootMode==='simple'){document.getElementById('rootOut').textContent=`${sym}${n} = ${v.toFixed(3).replace(/\.?0+$/,'')}`; document.getElementById('rootExp').textContent=`Проверка: ${v.toFixed(2)} × ${v.toFixed(2)} ≈ ${n} (для квадратного)`;}
+ else{
+   // упрощение для квадратного
+   if(d!==2){document.getElementById('rootOut').textContent=`${sym}${n} = ${v.toFixed(3)}`;document.getElementById('rootExp').textContent='Упрощение работает для квадратного корня';return;}
+   let best=1, rest=n;
+   for(let i=2;i*i<=n;i++){ while(rest%(i*i)===0){best*=i; rest/= (i*i);} }
+   if(best===1){document.getElementById('rootOut').textContent=`√${n} — уже не упрощается`;document.getElementById('rootExp').textContent='';}
+   else{document.getElementById('rootOut').textContent=`√${n} = ${best}√${rest}`;document.getElementById('rootExp').textContent=`${n} = ${best*best} × ${rest}, а √${best*best} = ${best}`;}
+ }
+}
+function setTrig(t){trig=t; document.querySelectorAll('[data-trig]').forEach(b=>b.classList.toggle('active',b.dataset.trig===t)); calcTrig();}
+function calcTrig(){
+ let a=parseFloat(document.getElementById('ang').value); if(isNaN(a))return;
+ let r=a*Math.PI/180, v, exp='';
+ if(trig==='sin'){v=Math.sin(r); exp='sin — это отношение противолежащего катета к гипотенузе. Формула: sin²+cos²=1';}
+ if(trig==='cos'){v=Math.cos(r); exp='cos — прилежащий катет к гипотенузе. cos 2x — это НЕ 2cos x!';}
+ if(trig==='tg'){v=Math.tan(r); exp='tg = sin / cos';}
+ if(trig==='ctg'){v=1/Math.tan(r); exp='ctg = cos / sin = 1 / tg';}
+ document.getElementById('trigOut').textContent=`${trig} ${a}° = ${v.toFixed(4)}`;
+ document.getElementById('trigExp').textContent=exp;
+}
+function calcPow(){let b=parseFloat(document.getElementById('pBase').value), e=parseFloat(document.getElementById('pExp').value); if(isNaN(b)||isNaN(e))return; document.getElementById('powOut').textContent=`${b} ^ ${e} = ${Math.pow(b,e)}`;}
+function calcMinus(){let s=document.getElementById('minusIn').value; try{let v=eval(s.replace(/--/g,'+')); document.getElementById('minusOut').textContent=`${s} = ${v}`;}catch(e){document.getElementById('minusOut').textContent='Напиши пример, например -5 + 10';}}
+function calcCommon(){
+ let s=document.getElementById('commonIn').value.trim().toLowerCase();
+ let m=s.match(/(\d+)\s*%\s*от\s*(\d+)/);
+ if(m){let v=parseFloat(m[1])*parseFloat(m[2])/100; document.getElementById('commonOut').textContent=`${m[1]}% от ${m[2]} = ${v}`; return;}
+ m=s.match(/корень из (\d+)/); if(m){document.getElementById('commonOut').textContent=`√${m[1]} = ${Math.sqrt(parseFloat(m[1])).toFixed(3)}`; return;}
+ m=s.match(/sin (\d+)/); if(m){document.getElementById('commonOut').textContent=`sin ${m[1]}° = ${Math.sin(parseFloat(m[1])*Math.PI/180).toFixed(4)}`; return;}
+ try{let v=eval(s.replace(/,/g,'.')); document.getElementById('commonOut').textContent=`${s} = ${v}`;}catch(e){document.getElementById('commonOut').textContent='Попробуй: 15% от 200, или -5 + 10';}
+}
+renderFormulas(); calcRoot(); calcTrig(); calcPow(); calcMinus(); calcCommon();
+</script></body></html>
