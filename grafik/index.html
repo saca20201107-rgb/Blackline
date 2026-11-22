@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Графики функций</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:#F2F3F5;color:#2B2D33}
+header{background:#fff;border-bottom:1px solid #e5e7eb;padding:12px 16px}
+h1{font-size:20px;margin:0} .sub{font-size:13px;color:#6b7280}
+.wrap{max-width:760px;margin:0 auto;padding:16px}
+.card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px}
+label{font-size:13px;color:#6b7280;display:block;margin-top:14px}
+input[type=range]{width:100%} .result{margin-top:14px;background:#F7F8FA;border-radius:12px;padding:14px;font-size:16px}
+.small{font-size:14px;color:#555;margin-top:6px} .btn{padding:10px 16px;border:1px solid #d9dee3;background:#EEF1F4;border-radius:999px;cursor:pointer;font-size:15px;margin:4px 4px 0 0}
+.btn.active{background:#5A7A9A;color:#fff;border-color:#5A7A9A}
+.canvas-wrap{background:#fff;border:2px solid #D9DEE3;border-radius:12px;overflow:hidden}
+canvas{width:100%;height:340px;display:block;background:#fff}
+table{width:100%;border-collapse:collapse;margin-top:10px;font-size:15px;text-align:center} th,td{padding:9px;border-bottom:1px solid #eee}
+.mode{font-size:16px;font-weight:700}
+</style></head>
+<body>
+<header><h1>Графики функций</h1><div class="sub">Одна функция — один график — одна таблица</div></header>
+<div class="wrap">
+
+<div class="card">
+<div class="mode" id="modeTitle">y = a·x² + b·x + c</div>
+<div class="small">Выбери вид функции. Ползунки, график и таблица — это одна и та же функция.</div>
+<div style="margin-top:10px">
+<button class="btn active" id="btnPar" onclick="setMode('par')">Парабола</button>
+<button class="btn" id="btnLine" onclick="setMode('line')">Прямая</button>
+<button class="btn" id="btnSin" onclick="setMode('sin')">sin — с вариантами</button>
+<button class="btn" id="btnCos" onclick="setMode('cos')">cos — с вариантами</button>
+</div>
+
+<!-- Пресеты для параболы / прямой -->
+<div id="presetsPar" style="margin-top:12px">
+<button class="btn" onclick="preset(1,0,0)">Обычная парабола</button>
+<button class="btn" onclick="preset(-1,0,0)">Перевёрнутая</button>
+<button class="btn" onclick="preset(2,0,1)">Узкая и вверх</button>
+<button class="btn" onclick="preset(0,2,1)">Прямая y = 2x + 1</button>
+</div>
+
+<!-- Пресеты для sin / cos — РАЗНЫЕ ВАРИАНТЫ, не только голый sin(x) -->
+<div id="presetsTrig" style="margin-top:12px;display:none">
+<button class="btn" onclick="trigPreset(1,1,0)">y = sin(x)</button>
+<button class="btn" onclick="trigPreset(2,1,0)">y = 2·sin(x) — выше</button>
+<button class="btn" onclick="trigPreset(1,2,0)">y = sin(2x) — чаще</button>
+<button class="btn" onclick="trigPreset(1,1,1)">y = sin(x) + 1 — поднят</button>
+<button class="btn" onclick="trigPreset(1,1,-1)">y = sin(x) − 1 — опущен</button>
+<button class="btn" onclick="trigPreset(-1,1,0)">y = −sin(x) — перевёрнут</button>
+</div>
+
+<div id="slidersPar">
+<label>Ширина и направление — a = <b id="aVal">1.5</b><br><span class="small">Если a &gt; 0 — ветви вверх, если a &lt; 0 — ветви вниз. Если a = 0 — это прямая.</span></label>
+<input type="range" id="a" min="-3" max="3" step="0.5" value="1.5" oninput="draw()">
+<label>Сдвиг влево-вправо — b = <b id="bVal">-1.5</b><br><span class="small">b двигает вершину влево и вправо. У прямой b — наклон.</span></label>
+<input type="range" id="b" min="-5" max="5" step="0.5" value="-1.5" oninput="draw()">
+<label>Сдвиг вверх-вниз — c = <b id="cVal">3</b><br><span class="small">c — где график пересекает ось Y.</span></label>
+<input type="range" id="c" min="-5" max="5" step="0.5" value="3" oninput="draw()">
+</div>
+
+<!-- Ползунки для sin / cos -->
+<div id="slidersTrig" style="display:none">
+<label>Высота волны — A = <b id="taVal">1</b><br><span class="small">Чем больше A — тем выше волна. A = 2 — волна от -2 до 2.</span></label>
+<input type="range" id="ta" min="-3" max="3" step="0.5" value="1" oninput="draw()">
+<label>Как часто волна — k = <b id="tkVal">1</b><br><span class="small">k = 1 — обычная волна. k = 2 — волна в 2 раза чаще, сжимается.</span></label>
+<input type="range" id="tk" min="0.5" max="3" step="0.5" value="1" oninput="draw()">
+<label>Поднять / опустить — d = <b id="tdVal">0</b><br><span class="small">Вся волна поднимается или опускается.</span></label>
+<input type="range" id="td" min="-3" max="3" step="0.5" value="0" oninput="draw()">
+</div>
+
+<div class="result" id="info"></div>
+</div>
+
+<div class="card">
+<div class="canvas-wrap"><canvas id="cv"></canvas></div>
+<div class="small">Плоскость: X от -6 до 6, Y от -6 до 6.</div>
+<button class="btn" onclick="draw()">Обновить</button>
+</div>
+
+<div class="card">
+<h3 style="margin:0">Таблица точек — для этой же функции</h3>
+<div class="small">Крутишь ползунки сверху — таблица меняется сразу.</div>
+<div class="result" id="table"></div>
+</div>
+
+</div>
+<script>
+let mode='par';
+function setMode(m){
+ mode=m;
+ ['par','line','sin','cos'].forEach(k=>document.getElementById('btn'+(k==='par'?'Par':k==='line'?'Line':k==='sin'?'Sin':'Cos')).classList.toggle('active', (m==='par'&&k==='par')||(m==='line'&&k==='line')||(m==='sin'&&k==='sin')||(m==='cos'&&k==='cos')));
+ let isTrig = (m==='sin'||m==='cos');
+ document.getElementById('slidersPar').style.display = isTrig?'none':'block';
+ document.getElementById('slidersTrig').style.display = isTrig?'block':'none';
+ document.getElementById('presetsPar').style.display = isTrig?'none':'block';
+ document.getElementById('presetsTrig').style.display = isTrig?'block':'none';
+ // подписи кнопок пресетов под sin / cos
+ if(isTrig){
+   let btns=document.getElementById('presetsTrig').querySelectorAll('.btn');
+   let name = m==='sin'?'sin':'cos';
+   btns[0].textContent='y = '+name+'(x)';
+   btns[1].textContent='y = 2·'+name+'(x) — выше';
+   btns[2].textContent='y = '+name+'(2x) — чаще';
+   btns[3].textContent='y = '+name+'(x) + 1 — поднят';
+   btns[4].textContent='y = '+name+'(x) − 1 — опущен';
+   btns[5].textContent='y = −'+name+'(x) — перевёрнут';
+ }
+ if(m==='line'){ document.getElementById('a').value=0; document.getElementById('b').value=2; document.getElementById('c').value=1; }
+ if(m==='par'){ document.getElementById('a').value=1.5; document.getElementById('b').value=-1.5; document.getElementById('c').value=3; }
+ document.getElementById('modeTitle').textContent = m==='par' ? 'y = a·x² + b·x + c' : m==='line' ? 'y = b·x + c  (прямая)' : m==='sin' ? 'y = A·sin(k·x) + d' : 'y = A·cos(k·x) + d';
+ draw();
+}
+function preset(a,b,c){ setMode(a===0?'line':'par'); document.getElementById('a').value=a; document.getElementById('b').value=b; document.getElementById('c').value=c; draw(); }
+function trigPreset(A,k,d){ document.getElementById('ta').value=A; document.getElementById('tk').value=k; document.getElementById('td').value=d; draw(); }
+function f(x){
+ if(mode==='sin'||mode==='cos'){
+   let A=parseFloat(document.getElementById('ta').value), k=parseFloat(document.getElementById('tk').value), d=parseFloat(document.getElementById('td').value);
+   return mode==='sin' ? A*Math.sin(k*x)+d : A*Math.cos(k*x)+d;
+ }
+ let a=parseFloat(document.getElementById('a').value), b=parseFloat(document.getElementById('b').value), c=parseFloat(document.getElementById('c').value);
+ return a*x*x+b*x+c;
+}
+function draw(){
+ let a=parseFloat(document.getElementById('a').value), b=parseFloat(document.getElementById('b').value), c=parseFloat(document.getElementById('c').value);
+ document.getElementById('aVal').textContent=a; document.getElementById('bVal').textContent=b; document.getElementById('cVal').textContent=c;
+ let A=parseFloat(document.getElementById('ta').value), k=parseFloat(document.getElementById('tk').value), d=parseFloat(document.getElementById('td').value);
+ document.getElementById('taVal').textContent=A; document.getElementById('tkVal').textContent=k; document.getElementById('tdVal').textContent=d;
+ let info='', title='';
+ if(mode==='sin'||mode==='cos'){
+   let nm = mode==='sin'?'sin':'cos';
+   title='y = '+A+'·'+nm+'('+k+'x) + '+d;
+   info='Сейчас: высота волны = '+Math.abs(A)+', волна '+(k===1?'обычная':k>1?'в '+k+' раза чаще':'реже')+', вся волна '+(d===0?'не сдвинута':d>0?'поднята на '+d:'опущена на '+Math.abs(d))+'. Волна идёт от '+(d-Math.abs(A))+' до '+(d+Math.abs(A))+'.';
+ } else if(a===0){ title='y = '+b+'x + '+c; info='Это прямая: наклон = '+b+', пересекает Y в точке '+c+'.'; }
+ else {
+   let xv=-b/(2*a), yv=a*xv*xv+b*xv+c;
+   title='y = '+a+'x² + '+b+'x + '+c;
+   info='Вершина параболы: ('+xv.toFixed(2)+', '+yv.toFixed(2)+'). a='+a+', ветви '+(a>0?'вверх':'вниз')+'. c='+c+'.';
+ }
+ document.getElementById('info').textContent=info;
+ let cv=document.getElementById('cv'); let rect=cv.getBoundingClientRect(); let W=Math.max(320,Math.floor(rect.width)); let H=340;
+ if(cv.width!==W) cv.width=W; if(cv.height!==H) cv.height=H;
+ let ctx=cv.getContext('2d'); let cx=W/2, cy=H/2, sc=Math.min(W/13,H/13);
+ ctx.fillStyle='#FFFFFF'; ctx.fillRect(0,0,W,H);
+ ctx.strokeStyle='#E8EBEF'; ctx.lineWidth=1;
+ for(let i=-6;i<=6;i++){ ctx.beginPath(); ctx.moveTo(cx+i*sc,0); ctx.lineTo(cx+i*sc,H); ctx.stroke(); ctx.beginPath(); ctx.moveTo(0,cy+i*sc); ctx.lineTo(W,cy+i*sc); ctx.stroke(); }
+ ctx.strokeStyle='#2B2D33'; ctx.lineWidth=2;
+ ctx.beginPath(); ctx.moveTo(0,cy); ctx.lineTo(W,cy); ctx.stroke();
+ ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,H); ctx.stroke();
+ ctx.fillStyle='#2B2D33'; ctx.font='bold 14px Arial'; ctx.fillText('x',W-16,cy-8); ctx.fillText('y',cx+8,16);
+ ctx.fillStyle='#6b7280'; ctx.font='12px Arial';
+ for(let i=-6;i<=6;i++){ if(i!==0){ ctx.fillText(String(i),cx+i*sc-3,cy+15); ctx.fillText(String(-i),cx+5,cy+i*sc+4);} }
+ ctx.fillText('0',cx+5,cy+15);
+ ctx.strokeStyle='#5A7A9A'; ctx.lineWidth=3; ctx.beginPath(); let first=true;
+ for(let px=0;px<=W;px+=2){ let x=(px-cx)/sc; let y=f(x); if(y<-6.5||y>6.5){first=true; continue;} let py=cy-y*sc; if(first){ctx.moveTo(px,py); first=false;} else ctx.lineTo(px,py); }
+ ctx.stroke();
+ if(mode==='par' && a!==0){ let xv=-b/(2*a), yv=a*xv*xv+b*xv+c; if(yv>=-6&&yv<=6){ let vx=cx+xv*sc, vy=cy-yv*sc; ctx.fillStyle='#5A7A9A'; ctx.beginPath(); ctx.arc(vx,vy,5,0,7); ctx.fill(); ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(vx,vy,2,0,7); ctx.fill(); } }
+ let rows='';
+ for(let x=-3;x<=3;x++){ let y=f(x); rows+='<tr><td>'+x+'</td><td>'+y.toFixed(2)+'</td></tr>'; }
+ document.getElementById('table').innerHTML='<b>'+title+'</b><table><tr><th>x</th><th>y</th></tr>'+rows+'</table>';
+}
+window.addEventListener('resize', draw);
+window.addEventListener('load', function(){ setTimeout(draw,50); setTimeout(draw,300); });
+draw();
+</script></body></html>
