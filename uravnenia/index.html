@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ru"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Уравнения — крутишь, решение за секунду</title>
+<style>
+*{box-sizing:border-box} body{margin:0;font-family:Inter,Arial,sans-serif;background:#F2F3F5;color:#2B2D33}
+header{background:#fff;border-bottom:1px solid #e5e7eb;padding:14px 16px} h1{font-size:20px;margin:0} .sub{font-size:13px;color:#6b7280}
+.wrap{max-width:680px;margin:0 auto;padding:16px} .card{background:#fff;border-radius:16px;padding:18px;box-shadow:0 2px 10px rgba(0,0,0,.05);margin-bottom:14px}
+.tabs{display:flex;gap:8px} .tab{flex:1;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:800;cursor:pointer;background:#EEF1F4}
+.tab.on{background:#2B2D33;color:#fff}
+.eq{font-size:26px;font-weight:800;text-align:center;margin:16px 0;padding:14px;background:#F7F8FA;border-radius:12px}
+label{display:flex;justify-content:space-between;font-size:15px;font-weight:700;margin-top:14px} label span{font-weight:400;color:#666}
+input[type=range]{width:100%;margin-top:6px;accent-color:#2B2D33}
+.row{display:flex;gap:8px;margin-top:10px} .btn{flex:1;padding:12px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer} .btn.p{background:#2B2D33;color:#fff} .btn.g{background:#EEF1F4;color:#222}
+.solution{background:#F7F8FA;border-radius:12px;padding:16px;font-size:16px;line-height:1.75;margin-top:14px}
+.solution b{color:#111} .answer{background:#fff;border:1px solid #d9dee3;border-radius:10px;padding:12px;margin-top:10px;font-size:18px;font-weight:800}
+.small{font-size:14px;color:#666;line-height:1.6}
+code{background:#fff;border:1px solid #e5e7eb;padding:2px 6px;border-radius:6px}
+</style></head>
+<body>
+<header><h1>Уравнения — крутишь, решение за секунду</h1><div class="sub">Без графика. Только ползунки и шаги решения.</div></header>
+<div class="wrap">
+<div class="card">
+<div class="tabs">
+<button class="tab on" id="tab-lin" onclick="setType('lin')">Линейное</button>
+<button class="tab" id="tab-quad" onclick="setType('quad')">Квадратное</button>
+<button class="tab" id="tab-cub" onclick="setType('cub')">Кубическое</button>
+</div>
+<div class="eq" id="eqText"></div>
+<div id="sliders"></div>
+<div class="row"><button class="btn g" onclick="randomEq()">Случайное уравнение ↻</button><button class="btn g" onclick="copySol()">Копировать решение ⧉</button></div>
+<div class="solution" id="sol"></div>
+<div class="small" id="copyMsg"></div>
+</div>
+<div class="card">
+<div style="font-weight:800">Как это работает?</div>
+<div class="small">Крутишь ползунок — коэффициент меняется, и всё решение переписывается за секунду. Не надо вводить и нажимать «решить».<br>• Линейное: <code>ax + b = 0 → x = -b / a</code><br>• Квадратное: <code>D = b² - 4ac</code>, потом корни по формуле<br>• Кубическое: сначала ищем целый корень, делим, остаётся квадратное</div>
+</div>
+</div>
+<script>
+let type='quad';
+let vals={a:1,b:-3,c:2,d:0};
+function fmt(n){ let v=Math.round(n*1000)/1000; if(Math.abs(v)<0.0005) v=0; return String(v).replace('.',','); }
+function fmtCoef(n, first, withX){
+  if(n===0) return '';
+  let s = n===1 && withX ? '' : (n===-1 && withX ? '-' : fmt(n));
+  return (n>0 && !first ? ' + ' : (n<0 && !first ? ' - ' : '')) + (n<0 && !first ? s.replace('-','') : s);
+}
+function eqStr(){
+  if(type==='lin'){
+    let a=vals.a, b=vals.b;
+    let s=''; if(a!==0) s+= (a===1?'x':a===-1?'-x':fmt(a)+'x'); if(b!==0) s+= (b>0?' + ':' - ')+fmt(Math.abs(b));
+    if(s==='') s='0'; return s+' = 0';
+  }
+  if(type==='quad'){
+    let a=vals.a,b=vals.b,c=vals.c; let parts=[];
+    if(a!==0) parts.push((a===1?'x²':a===-1?'-x²':fmt(a)+'x²'));
+    if(b!==0) parts.push((b>0?'+ ':'- ')+(Math.abs(b)===1?'x':fmt(Math.abs(b))+'x'));
+    if(c!==0) parts.push((c>0?'+ ':'- ')+fmt(Math.abs(c)));
+    if(parts.length===0) return '0 = 0';
+    return parts.join(' ').replace(/\+ -/g,'- ')+' = 0';
+  }
+  let a=vals.a,b=vals.b,c=vals.c,d=vals.d; let parts=[];
+  if(a!==0) parts.push((a===1?'x³':a===-1?'-x³':fmt(a)+'x³'));
+  if(b!==0) parts.push((b>0?'+ ':'- ')+(Math.abs(b)===1?'x²':fmt(Math.abs(b))+'x²'));
+  if(c!==0) parts.push((c>0?'+ ':'- ')+(Math.abs(c)===1?'x':fmt(Math.abs(c))+'x'));
+  if(d!==0) parts.push((d>0?'+ ':'- ')+fmt(Math.abs(d)));
+  if(parts.length===0) return '0 = 0';
+  return parts.join(' ')+' = 0';
+}
+function setType(t){ type=t; document.querySelectorAll('.tab').forEach(e=>e.classList.remove('on')); document.getElementById('tab-'+(t==='lin'?'lin':t==='quad'?'quad':'cub')).classList.add('on'); renderSliders(); update(); }
+function renderSliders(){
+  let box=document.getElementById('sliders'); let html='';
+  let defs = type==='lin' ? [['a',-1000,1000],['b',-1000,1000]] : type==='quad' ? [['a',-1000,1000],['b',-1000,1000],['c',-1000,1000]] : [['a',-1000,1000],['b',-1000,1000],['c',-1000,1000],['d',-1000,1000]];
+  defs.forEach(([k,mn,mx])=>{
+    if(k==='a' && vals[k]===0) vals[k]=1;
+    let sliderVal=Math.max(mn,Math.min(mx,vals[k]));
+    html+='<div style="margin-top:14px"><label style="display:flex;justify-content:space-between;align-items:center;gap:8px">'+k+' = <span id="v-'+k+'">'+fmt(vals[k])+'</span><input type="number" id="num-'+k+'" value="'+vals[k]+'" step="0.1" style="width:130px;padding:10px;border:2px solid #2B2D33;border-radius:10px;font-size:17px;font-weight:800;text-align:center" oninput="setVal(\''+k+'\',+this.value||0)"></label><input type="range" min="'+mn+'" max="'+mx+'" step="0.1" value="'+sliderVal+'" oninput="setVal(\''+k+'\',+this.value); document.getElementById(\'num-'+k+'\').value=this.value"></div>';
+  });
+  box.innerHTML=html;
+}
+function setVal(k,v){ vals[k]=v; let lab=document.getElementById('v-'+k); if(lab) lab.textContent=fmt(v); let num=document.getElementById('num-'+k); if(num && document.activeElement!==num) num.value=v; update(); }
+function update(){ document.getElementById('eqText').textContent=eqStr(); let h=''; if(type==='lin') h=solveLin(); else if(type==='quad') h=solveQuad(); else h=solveCub(); document.getElementById('sol').innerHTML=h; }
+function solveLin(){
+  let a=vals.a,b=vals.b;
+  let h='<b>Решение — по шагам:</b><br>';
+  h+='1. Уравнение: <code>'+eqStr()+'</code><br>';
+  if(a===0){ if(b===0) return h+'<div class="answer">Любое x — подходит</div>'; else return h+'<div class="answer">Нет корней</div>'; }
+  h+='2. Переносим <code>'+fmt(b)+'</code> вправо: <code>'+fmt(a)+'x = '+fmt(-b)+'</code><br>';
+  h+='3. Делим на <code>'+fmt(a)+'</code>: <code>x = '+fmt(-b)+' : '+fmt(a)+' = '+fmt(-b/a)+'</code>';
+  h+='<div class="answer">Ответ: x = '+fmt(-b/a)+'</div>';
+  return h;
+}
+function solveQuad(){
+  let a=vals.a,b=vals.b,c=vals.c;
+  let h='<b>Решение — по шагам:</b><br>';
+  h+='1. Уравнение: <code>'+eqStr()+'</code><br>';
+  if(a===0) return h+'a = 0 — это уже не квадратное. Поставь a ≠ 0.';
+  let D=b*b-4*a*c;
+  h+='2. Дискриминант: <code>D = b² - 4ac = '+fmt(b)+'² - 4·'+fmt(a)+'·'+fmt(c)+' = '+fmt(D)+'</code><br>';
+  if(D>0){
+    let s=Math.sqrt(D); let x1=(-b-s)/(2*a), x2=(-b+s)/(2*a);
+    h+='3. D > 0 — два корня.<br>';
+    h+='4. <code>x₁ = (-b - √D) / 2a = ('+fmt(-b)+' - '+fmt(s)+') / '+fmt(2*a)+' = '+fmt(x1)+'</code><br>';
+    h+='5. <code>x₂ = (-b + √D) / 2a = ('+fmt(-b)+' + '+fmt(s)+') / '+fmt(2*a)+' = '+fmt(x2)+'</code>';
+    h+='<div class="answer">Ответ: x₁ = '+fmt(x1)+', x₂ = '+fmt(x2)+'</div>';
+  } else if(D===0){
+    let x=-b/(2*a);
+    h+='3. D = 0 — один корень.<br>4. <code>x = -b / 2a = '+fmt(-b)+' / '+fmt(2*a)+' = '+fmt(x)+'</code>';
+    h+='<div class="answer">Ответ: x = '+fmt(x)+'</div>';
+  } else {
+    h+='3. D < 0 — корней нет. Парабола не пересекает ось X.';
+    h+='<div class="answer">Ответ: корней нет</div>';
+  }
+  return h;
+}
+function divisors(n){ n=Math.abs(n); let r=[]; for(let i=1;i<=n;i++) if(n%i===0) r.push(i); return r; }
+function solveCub(){
+  let a=vals.a,b=vals.b,c=vals.c,d=vals.d;
+  let h='<b>Решение — по шагам:</b><br>';
+  h+='1. Уравнение: <code>'+eqStr()+'</code><br>';
+  if(a===0) return h+'a = 0 — это уже не кубическое.';
+  // try rational root: divisors of d / divisors of a, try integer first
+  let candidates=[];
+  let divD=divisors(d); let divA=divisors(a);
+  divD.forEach(p=>{ divA.forEach(q=>{ let v=p/q; if(!candidates.includes(v)) candidates.push(v); if(!candidates.includes(-v)) candidates.push(-v); }); });
+  if(d===0) candidates.unshift(0);
+  let found=null;
+  for(let r of candidates){ let val=a*r*r*r+b*r*r+c*r+d; if(Math.abs(val)<0.001){ found=r; break; } }
+  if(found===null){
+    h+='2. Целый / дробный корень подбором не нашёлся.<br>';
+    // numeric roots by scanning
+    let roots=[]; for(let x=-10;x<10;x+=0.01){ let f1=a*x*x*x+b*x*x+c*x+d; let x2=x+0.01; let f2=a*x2*x2*x2+b*x2*x2+c*x2+d; if(f1===0) roots.push(x); else if(f1*f2<0) roots.push((x+x2)/2); }
+    // dedup
+    let uniq=[]; roots.forEach(r=>{ if(!uniq.some(u=>Math.abs(u-r)<0.2)) uniq.push(Math.round(r*100)/100); });
+    h+='3. Ищем, где график пересекает ось — приближённо.<br>';
+    if(uniq.length) h+='<div class="answer">Приближённые корни: '+uniq.map(fmt).join(', ')+'</div>';
+    else h+='<div class="answer">Корень — один, но дробный, подбором не берётся</div>';
+    return h;
+  }
+  h+='2. Подбираем корень: пробуем делители свободного члена. Подходит <code>x = '+fmt(found)+'</code>, потому что при подстановке получается 0.<br>';
+  if(found===0){
+    h+='3. Выносим x: <code>x·('+fmt(a)+'x² + '+fmt(b)+'x + '+fmt(c)+') = 0</code><br>';
+    h+='4. Первый корень: <code>x₁ = 0</code>. Осталось квадратное: <code>'+fmt(a)+'x² + '+fmt(b)+'x + '+fmt(c)+' = 0</code><br>';
+    let D=b*b-4*a*c; h+='5. D = '+fmt(D)+'. ';
+    if(D>=0){ let s=Math.sqrt(Math.max(0,D)); let x1=(-b-s)/(2*a), x2=(-b+s)/(2*a); h+='Корни: '+fmt(x1)+', '+fmt(x2)+'.'; h+='<div class="answer">Ответ: x = 0, '+fmt(x1)+', '+fmt(x2)+'</div>'; }
+    else { h+='Корней у квадратного нет.'; h+='<div class="answer">Ответ: x = 0</div>'; }
+    return h;
+  }
+  // synthetic division: a x^3 + b x^2 + c x + d divided by (x - found)
+  let A=a; let B=b + A*found; let C=c + B*found;
+  h+='3. Делим на <code>(x - '+fmt(found)+')</code>. Получаем: <code>(x - '+fmt(found)+')·('+fmt(A)+'x² + '+fmt(B)+'x + '+fmt(C)+') = 0</code><br>';
+  h+='4. Первый корень: <code>x₁ = '+fmt(found)+'</code>. Осталось квадратное: <code>'+fmt(A)+'x² + '+fmt(B)+'x + '+fmt(C)+' = 0</code><br>';
+  let D=B*B-4*A*C; h+='5. D = '+fmt(D)+'. ';
+  if(D>0){ let s=Math.sqrt(D); let x2=(-B-s)/(2*A), x3=(-B+s)/(2*A); h+='Два корня: '+fmt(x2)+', '+fmt(x3)+'.'; h+='<div class="answer">Ответ: x₁ = '+fmt(found)+', x₂ = '+fmt(x2)+', x₃ = '+fmt(x3)+'</div>'; }
+  else if(D===0){ let x2=-B/(2*A); h+='Один корень: '+fmt(x2)+'.'; h+='<div class="answer">Ответ: x₁ = '+fmt(found)+', x₂ = '+fmt(x2)+'</div>'; }
+  else { h+='У квадратного корней нет.'; h+='<div class="answer">Ответ: x = '+fmt(found)+'</div>'; }
+  return h;
+}
+function randomEq(){
+  if(type==='lin'){ vals.a=1+Math.floor(Math.random()*5)*(Math.random()>0.5?1:-1); vals.b=-8+Math.floor(Math.random()*17); }
+  else if(type==='quad'){ vals.a=1+Math.floor(Math.random()*3); vals.b=-6+Math.floor(Math.random()*13); vals.c=-6+Math.floor(Math.random()*13); }
+  else { vals.a=1; vals.b=-4+Math.floor(Math.random()*9); vals.c=-4+Math.floor(Math.random()*9); vals.d=-6+Math.floor(Math.random()*13); }
+  renderSliders(); update();
+}
+function copySol(){ let t=document.getElementById('sol').innerText; navigator.clipboard.writeText(t).then(()=>document.getElementById('copyMsg').textContent='Скопировано!'); }
+setType('quad');
+</script></body></html>
